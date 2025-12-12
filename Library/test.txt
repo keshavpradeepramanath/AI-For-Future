@@ -1,1 +1,4 @@
 test
+Lessons learn - Document can be OutOfBounds. Correct that.
+Outdates APIs can be present. Change that.
+Verify if the document contains images or text, while using PDFs.
