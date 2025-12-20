@@ -1,0 +1,6 @@
+requests
+python-dotenv
+requests
+openai
+python-dotenv
+base64
