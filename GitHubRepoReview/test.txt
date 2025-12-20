@@ -1,1 +1,11 @@
-test
+app.py
+        ↓
+   reviewer.py (decides what to do)
+        ↓
+   agent.py (thinks & reviews)
+        ↓
+   tools.py (fetches data)
+        ↓
+   prompts.py (guides thinking)
+        ↓
+   Results back to app.py
