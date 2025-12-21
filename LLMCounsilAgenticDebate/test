@@ -1,1 +1,3 @@
 Ability of the agent to compare answers between multiple agents and get the final answer indicating whicg is better
+This update only has the info of all the OpenAI LLMs.
+Next version will contain comparison of other LLMs like Gemini, Claude etc
