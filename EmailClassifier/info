@@ -11,3 +11,32 @@ Company + Label Aggregation Agent
 
 Emails are classified purely based on summarized content, 
 not sender heuristics, and then aggregated by company and intent to produce accurate, explainable insights.”
+
+
+app.py
+
+Orchestrates the Streamlit UI, coordinates all agents, and presents company-wise email classification insights.
+
+gmail_auth.py
+
+Handles Gmail OAuth authentication and safely manages user access tokens.
+
+gmail_client.py
+
+Fetches raw emails from Gmail and extracts sender, subject, date, and body content.
+
+sender_agent.py
+
+Normalizes raw sender strings into clean company or brand names.
+
+summary_agent.py
+
+Summarizes email content into a concise, intent-focused description to reduce noise.
+
+intent_agent.py
+
+Classifies summarized email content into predefined intent categories like Promotional or Bank Statement.
+
+aggregation.py
+
+Aggregates classified emails by company and category to produce actionable counts and trends.
