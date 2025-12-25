@@ -1,8 +1,17 @@
 import base64
 
-def fetch_emails(service, max_results=200):
+def fetch_emails(service, sender_filter=None, max_results=200):
+    """
+    Fetch emails from Gmail.
+    Optionally filter by sender using Gmail search syntax.
+    """
+
+    # Build Gmail search query
+    query = f"from:{sender_filter}" if sender_filter else ""
+
     results = service.users().messages().list(
         userId="me",
+        q=query,
         maxResults=max_results
     ).execute()
 
@@ -21,9 +30,11 @@ def fetch_emails(service, max_results=200):
         }
 
         body = ""
+
+        # Extract text/plain body safely
         parts = data["payload"].get("parts", [])
         for part in parts:
-            if part["mimeType"] == "text/plain":
+            if part.get("mimeType") == "text/plain" and "data" in part["body"]:
                 body = base64.urlsafe_b64decode(
                     part["body"]["data"]
                 ).decode("utf-8", errors="ignore")
