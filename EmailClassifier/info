@@ -7,3 +7,7 @@ Content Summarization Agent  (what is this email about?)
 Intent Classification Agent (Promotional, Statement, Due Payment, etc.)
        ↓
 Company + Label Aggregation Agent
+
+
+Emails are classified purely based on summarized content, 
+not sender heuristics, and then aggregated by company and intent to produce accurate, explainable insights.”
