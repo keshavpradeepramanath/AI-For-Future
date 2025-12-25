@@ -1,2 +1,3 @@
 - No option to see emails - coz its taken from OAuth directly
 - No emails were shown - Silent show coz either mails are filtered/ no emails obtained
+- Data was not getting fetched .
