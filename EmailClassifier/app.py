@@ -1,5 +1,7 @@
 import streamlit as st
 import os
+import pandas as pd
+from datetime import datetime
 from googleapiclient.discovery import build
 
 from gmail_auth import get_gmail_credentials
@@ -21,13 +23,20 @@ st.title("📊 Email Categorization & Trend Intelligence")
 
 st.markdown(
     """
-This app:
-- Reads emails from Gmail
+**What this app does**
+- Reads emails from your Gmail account (OAuth-based)
 - Understands **email content** (not sender assumptions)
-- Classifies emails into intent labels
+- Classifies intent (Promotional, Bank Statement, Due Payment, etc.)
 - Aggregates counts per **company & category**
+- Allows CSV export for future reference
 """
 )
+
+# -------------------------------------------------
+# Session State Initialization (CRITICAL)
+# -------------------------------------------------
+if "enriched_emails" not in st.session_state:
+    st.session_state.enriched_emails = []
 
 # -------------------------------------------------
 # Sidebar Inputs
@@ -37,6 +46,11 @@ st.sidebar.header("🔐 Configuration")
 openai_key = st.sidebar.text_input(
     "OpenAI API Key",
     type="password"
+)
+
+sender_filter = st.sidebar.text_input(
+    "Filter by sender (optional)",
+    placeholder="hdfc / icici / makemytrip"
 )
 
 max_emails = st.sidebar.slider(
@@ -53,13 +67,13 @@ max_emails = st.sidebar.slider(
 analyze_clicked = st.button("🚀 Analyze Emails")
 
 # -------------------------------------------------
-# Processing Logic (runs ONLY after click)
+# Processing Logic
 # -------------------------------------------------
 if analyze_clicked:
 
-    # -------- Validate OpenAI Key --------
+    # -------- Validate API Key --------
     if not openai_key:
-        st.error("Please enter your OpenAI API key to continue.")
+        st.error("Please enter your OpenAI API key.")
         st.stop()
 
     os.environ["OPENAI_API_KEY"] = openai_key
@@ -73,21 +87,24 @@ if analyze_clicked:
         st.stop()
 
     # -------- Fetch Emails --------
-    
-        # -------- Fetch Emails --------
     with st.spinner("📥 Fetching emails from Gmail..."):
-        emails = fetch_emails(service, max_results=max_emails)
+        emails = fetch_emails(
+            service,
+            sender_filter=sender_filter,
+            max_results=max_emails
+        )
 
     st.write("📬 Emails fetched:", len(emails))
 
     if not emails:
-        st.warning("No emails found. Try increasing max emails.")
+        st.warning("No emails found. Try adjusting the sender filter or email count.")
         st.stop()
 
-    enriched_emails = []
+    # Reset previous results
+    st.session_state.enriched_emails = []
     failed = 0
 
-    # -------- Content Understanding --------
+    # -------- Processing Loop --------
     with st.spinner("🧠 Understanding email content..."):
         for idx, email in enumerate(emails, start=1):
             try:
@@ -102,60 +119,42 @@ if analyze_clicked:
                 )
                 label = classify_intent(summary)
 
-                enriched_emails.append({
+                try:
+                    month = datetime.strptime(
+                        email["date"][:16], "%a, %d %b %Y"
+                    ).strftime("%Y-%m")
+                except:
+                    month = "Unknown"
+
+                st.session_state.enriched_emails.append({
                     "company": company,
-                    "label": label
+                    "label": label,
+                    "summary": summary,
+                    "month": month
                 })
 
             except Exception as e:
                 failed += 1
                 st.warning(f"⚠️ Failed to process email #{idx}: {e}")
 
-    st.write("✅ Emails processed:", len(enriched_emails))
+    st.write("✅ Emails processed:", len(st.session_state.enriched_emails))
     st.write("❌ Emails skipped:", failed)
 
-    if not enriched_emails:
-        st.error("No emails could be processed. Check logs above.")
+    if not st.session_state.enriched_emails:
+        st.error("No emails could be processed. Check warnings above.")
         st.stop()
 
+# -------------------------------------------------
+# Display Results (if available)
+# -------------------------------------------------
+if st.session_state.enriched_emails:
 
-    # -------- Content Understanding --------
-    enriched_emails = []
-
-    with st.spinner("🧠 Understanding email content..."):
-        for email in emails:
-            try:
-                company = normalize_sender(email["from"])
-                summary = summarize_email(
-                    email["subject"],
-                    email["body"]
-                )
-                label = classify_intent(summary)
-
-                enriched_emails.append({
-                    "company": company,
-                    "label": label
-                })
-
-            except Exception:
-                # Skip problematic emails safely
-                continue
-
-    # -------- Aggregation --------
-    stats = aggregate_by_company(enriched_emails)
+    stats = aggregate_by_company(st.session_state.enriched_emails)
 
     if not stats:
         st.error("Aggregation returned no results.")
         st.stop()
 
-    st.subheader("📌 Company-wise Email Classification")
-
-    for company, labels in stats.items():
-        st.markdown(f"### 🏢 {company}")
-        for label, count in labels.items():
-            st.write(f"{label} → {count}")
-
-    # -------- Display Results --------
     st.subheader("📌 Company-wise Email Classification")
 
     for company, labels in stats.items():
@@ -167,6 +166,21 @@ if analyze_clicked:
             ):
                 st.write(f"**{label}** → {count}")
 
+    # -------------------------------------------------
+    # CSV Export
+    # -------------------------------------------------
+    st.markdown("---")
+    st.subheader("⬇️ Export Report")
+
+    df = pd.DataFrame(st.session_state.enriched_emails)
+
+    st.download_button(
+        label="📥 Download CSV Report",
+        data=df.to_csv(index=False).encode("utf-8"),
+        file_name="email_classification_report.csv",
+        mime="text/csv"
+    )
+
     st.success("Analysis complete ✅")
 
 # -------------------------------------------------
@@ -174,5 +188,5 @@ if analyze_clicked:
 # -------------------------------------------------
 st.markdown("---")
 st.caption(
-    "Agentic Email Intelligence | Content-driven classification | No sender assumptions"
+    "Agentic Email Intelligence | Content-driven classification | Streamlit + Gmail + LLMs"
 )
