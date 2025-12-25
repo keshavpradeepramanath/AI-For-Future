@@ -1,0 +1,9 @@
+Gmail Fetch Agent
+       ↓
+Sender Normalization Agent   (HDFC, ICICI, MMT)
+       ↓
+Content Summarization Agent  (what is this email about?)
+       ↓
+Intent Classification Agent (Promotional, Statement, Due Payment, etc.)
+       ↓
+Company + Label Aggregation Agent
