@@ -1,0 +1,33 @@
+{
+    "IATA": {
+      "power_bank": {
+        "conditions": [
+          { "battery_wh": "<=100", "cabin": true, "checkin": false },
+          { "battery_wh": ">100", "cabin": false, "checkin": true }
+        ],
+        "reference": "IATA DGR 2.3.5.9"
+      },
+      "scissors": {
+        "conditions": [
+          { "blade_length_cm": "<=6", "cabin": true, "checkin": true },
+          { "blade_length_cm": ">6", "cabin": false, "checkin": true }
+        ],
+        "reference": "IATA Security Guidelines"
+      }
+    },
+  
+    "Airlines": {
+      "Indigo": {
+        "scissors": {
+          "override": "checkin_only"
+        }
+      },
+      "Emirates": {
+        "power_bank": {
+          "override": "cabin_only",
+          "max_wh": 100
+        }
+      }
+    }
+  }
+  
