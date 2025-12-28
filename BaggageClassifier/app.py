@@ -1,65 +1,86 @@
-import streamlit as st
-from PIL import Image
-import numpy as np
-from ultralytics import YOLO
-
+# -------------------------------
+# Silence PyTorch / YOLO warnings
+# -------------------------------
 import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore")
 
+# -------------------------------
+# Imports
+# -------------------------------
+import streamlit as st
+import json
+import numpy as np
+from PIL import Image
+from ultralytics import YOLO
 
 # -------------------------------
 # App Config
 # -------------------------------
 st.set_page_config(page_title="Smart Packing Assistant", layout="centered")
 st.title("🧳 Smart Packing Assistant")
-st.caption("Upload an image and check cabin vs check-in items")
+st.caption("Upload an image and classify items using airline & IATA rules")
 
 # -------------------------------
 # Load YOLO Model
 # -------------------------------
 @st.cache_resource
 def load_model():
-    return YOLO("yolov8n.pt")
+    return YOLO("yolov8s.pt")  # better recall than nano
 
 model = load_model()
 
 # -------------------------------
-# Label Normalization
+# Load Airline / IATA Rules
 # -------------------------------
-LABEL_NORMALIZATION = {
-    "cell phone": "phone",
-    "mobile phone": "phone",
-    "scissors": "scissors",
-    "knife": "knife",
-    "laptop": "laptop",
-    "book": "book",
-    "pen":"pen"
-}
+@st.cache_data
+def load_rules():
+    with open("airline_rules.json", "r") as f:
+        return json.load(f)
+
+RULES = load_rules()
 
 # -------------------------------
-# Rule Engine
+# Item Normalization
 # -------------------------------
-CABIN_ALLOWED = {
-    "phone", "laptop", "book", "wallet", "keys"
-}
+def normalize_item(yolo_label: str) -> str:
+    mapping = {
+        "cell phone": "phone",
+        "mobile phone": "phone",
+        "scissors": "scissors",
+        "knife": "knife",
+        "laptop": "laptop",
+        "book": "book",
+        "backpack": "bag",
+        "handbag": "bag"
+    }
+    return mapping.get(yolo_label, yolo_label)
 
-CHECKIN_ONLY = {
-    "scissors", "knife", "tool", "hammer"
-}
+# -------------------------------
+# Rule Engine (Deterministic)
+# -------------------------------
+def evaluate_item(item: str, airline: str, rules: dict):
+    # Airline override first
+    airline_rules = rules.get("Airlines", {}).get(airline, {})
+    if item in airline_rules:
+        override = airline_rules[item]
+        return override["decision"], override["reference"]
 
-NOT_ALLOWED = {
-    "gun", "firearm", "explosive"
-}
+    # Fall back to IATA
+    iata_rules = rules.get("IATA", {}).get(item)
+    if iata_rules:
+        return iata_rules["decision"], iata_rules["reference"]
 
-def classify_item(item_name: str):
-    if item_name in NOT_ALLOWED:
-        return "❌ Not Allowed", "Prohibited item as per aviation safety rules"
-    elif item_name in CHECKIN_ONLY:
-        return "🧳 Check-in Only", "Restricted or sharp item"
-    elif item_name in CABIN_ALLOWED:
-        return "✅ Cabin Allowed", "Common personal item"
-    else:
-        return "⚠️ Uncertain", "Unable to classify safely – check airline rules"
+    return "⚠️ Uncertain", "No official rule found"
+
+# -------------------------------
+# Sidebar
+# -------------------------------
+st.sidebar.header("✈️ Flight Details")
+
+airline = st.sidebar.selectbox(
+    "Select Airline",
+    ["IATA", "Indigo", "Emirates", "Lufthansa"]
+)
 
 # -------------------------------
 # Image Upload
@@ -71,20 +92,22 @@ uploaded_file = st.file_uploader(
 
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
-    st.image(image, caption="Uploaded Image", use_container_width=True)
+    st.image(image, caption="Uploaded Image", use_column_width=True)
 
     inspect_btn = st.button("🔍 Inspect Items")
 
     if inspect_btn:
-        st.info("Detecting items...")
+        st.info("Detecting items in image...")
 
-        # Run detection
         results = model(np.array(image))[0]
 
         if results.boxes is None or len(results.boxes) == 0:
-            st.warning("No recognizable items found.")
+            st.warning(
+                "No recognizable items detected. "
+                "Try placing items separately on a clear surface."
+            )
         else:
-            st.subheader("📦 Detected Items & Packing Guidance")
+            st.subheader("📦 Detected Items & Packing Rules")
 
             CONF_THRESHOLD = 0.15
 
@@ -93,21 +116,25 @@ if uploaded_file:
                 cls_id = int(box.cls[0])
 
                 raw_label = model.names[cls_id].lower()
-                item_name = LABEL_NORMALIZATION.get(raw_label, raw_label)
+                item = normalize_item(raw_label)
 
-                classification, reason = classify_item(item_name)
+                decision, reference = evaluate_item(
+                    item=item,
+                    airline=airline,
+                    rules=RULES
+                )
 
-                st.markdown(f"### 🧾 Item: **{item_name.title()}**")
+                st.markdown(f"### 🧾 Item: **{item.title()}**")
                 st.write(f"**Detection confidence:** {round(confidence, 2)}")
 
-                if confidence < 0.2:
+                if confidence < CONF_THRESHOLD:
                     st.warning("⚠️ Low confidence detection")
 
-                st.write(f"**Packing decision:** {classification}")
-                st.write(f"**Reason:** {reason}")
+                st.write(f"**Packing decision:** {decision}")
+                st.write(f"**Rule reference:** {reference}")
                 st.divider()
 
-                st.success("Inspection complete ✅")
+            st.success("Inspection complete ✅")
 
 # -------------------------------
 # Footer
