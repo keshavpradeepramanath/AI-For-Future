@@ -12,3 +12,10 @@ Item Normalization (battery, sharp, liquid, etc.)
 Rule Engine (deterministic)
         ↓
 Decision + Explanation
+
+Mental Model
+
+YOLO confidence → app.py (risk gating)
+Rule validity → rule_engine.py (deterministic)
+Rollback → metadata (is_active)
+Time → rule selection
