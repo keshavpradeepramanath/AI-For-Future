@@ -1,1 +1,14 @@
 
+Airline Websites / IATA PDFs
+        ↓
+Offline Rule Ingestion (manual / crawler / parser)
+        ↓
+Normalized Rule Store (JSON / DB)
+        ↓
+Image → Object Detection (YOLO)
+        ↓
+Item Normalization (battery, sharp, liquid, etc.)
+        ↓
+Rule Engine (deterministic)
+        ↓
+Decision + Explanation
