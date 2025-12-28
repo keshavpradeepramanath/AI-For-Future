@@ -1,5 +1,5 @@
 # -------------------------------
-# Silence PyTorch / YOLO warnings
+# Silence warnings
 # -------------------------------
 import warnings
 warnings.filterwarnings("ignore")
@@ -8,36 +8,34 @@ warnings.filterwarnings("ignore")
 # Imports
 # -------------------------------
 import streamlit as st
-import json
 import numpy as np
 from PIL import Image
 from ultralytics import YOLO
 
+from rule_engine import get_rule   # ✅ DB-backed rule engine
+
 # -------------------------------
 # App Config
 # -------------------------------
-st.set_page_config(page_title="Smart Packing Assistant", layout="centered")
+st.set_page_config(
+    page_title="Smart Packing Assistant",
+    layout="centered"
+)
+
 st.title("🧳 Smart Packing Assistant")
-st.caption("Upload an image and classify items using airline & IATA rules")
+st.caption(
+    "Upload an image and classify items using airline & IATA rules "
+    "(human-approved, deterministic)"
+)
 
 # -------------------------------
 # Load YOLO Model
 # -------------------------------
 @st.cache_resource
 def load_model():
-    return YOLO("yolov8s.pt")  # better recall than nano
+    return YOLO("yolov8s.pt")
 
 model = load_model()
-
-# -------------------------------
-# Load Airline / IATA Rules
-# -------------------------------
-@st.cache_data
-def load_rules():
-    with open("airline_rules.json", "r") as f:
-        return json.load(f)
-
-RULES = load_rules()
 
 # -------------------------------
 # Item Normalization
@@ -46,36 +44,19 @@ def normalize_item(yolo_label: str) -> str:
     mapping = {
         "cell phone": "phone",
         "mobile phone": "phone",
-        "scissors": "scissors",
-        "knife": "knife",
         "laptop": "laptop",
         "book": "book",
+        "scissors": "scissors",
+        "knife": "knife",
         "backpack": "bag",
         "handbag": "bag"
     }
     return mapping.get(yolo_label, yolo_label)
 
 # -------------------------------
-# Rule Engine (Deterministic)
+# Sidebar (Flight Context)
 # -------------------------------
-def evaluate_item(item: str, airline: str, rules: dict):
-    # Airline override first
-    airline_rules = rules.get("Airlines", {}).get(airline, {})
-    if item in airline_rules:
-        override = airline_rules[item]
-        return override["decision"], override["reference"]
-
-    # Fall back to IATA
-    iata_rules = rules.get("IATA", {}).get(item)
-    if iata_rules:
-        return iata_rules["decision"], iata_rules["reference"]
-
-    return "⚠️ Uncertain", "No official rule found"
-
-# -------------------------------
-# Sidebar
-# -------------------------------
-st.sidebar.header("✈️ Flight Details")
+st.sidebar.header("✈️ Flight Context")
 
 airline = st.sidebar.selectbox(
     "Select Airline",
@@ -92,12 +73,12 @@ uploaded_file = st.file_uploader(
 
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
-    st.image(image, caption="Uploaded Image", use_container_width=True)
+    st.image(image, caption="Uploaded Image", use_column_width=True)
 
     inspect_btn = st.button("🔍 Inspect Items")
 
     if inspect_btn:
-        st.info("Detecting items in image...")
+        st.info("Detecting items...")
 
         results = model(np.array(image))[0]
 
@@ -107,7 +88,7 @@ if uploaded_file:
                 "Try placing items separately on a clear surface."
             )
         else:
-            st.subheader("📦 Detected Items & Packing Rules")
+            st.subheader("📦 Detected Items & Packing Guidance")
 
             CONF_THRESHOLD = 0.15
 
@@ -118,10 +99,9 @@ if uploaded_file:
                 raw_label = model.names[cls_id].lower()
                 item = normalize_item(raw_label)
 
-                decision, reference = evaluate_item(
+                decision, reference = get_rule(
                     item=item,
-                    airline=airline,
-                    rules=RULES
+                    airline=airline
                 )
 
                 st.markdown(f"### 🧾 Item: **{item.title()}**")
@@ -140,5 +120,6 @@ if uploaded_file:
 # Footer
 # -------------------------------
 st.caption(
-    "⚠️ Guidance only. Final authority rests with airline and airport security."
+    "⚠️ This app provides guidance only. "
+    "Final authority rests with airline and airport security."
 )
