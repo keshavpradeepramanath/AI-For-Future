@@ -1,4 +1,5 @@
 import streamlit as st
+from collections import defaultdict
 
 from auth import get_credentials
 from gmail_service import get_gmail_service
@@ -6,32 +7,61 @@ from gmail_tools import search_gmail, fetch_metadata
 from agent import agent_decide
 from executor import move_to_trash
 
+
 # --------------------------------------------------
 # Page config
 # --------------------------------------------------
 st.set_page_config(
-    page_title="Gmail Cleanup Agent",
+    page_title="Gmail Cleanup – Company-wise",
     layout="centered"
 )
 
-st.title("🤖 Gmail Cleanup Agent")
-st.caption("Agent-assisted Gmail bulk cleanup with confirmation")
+st.title("📧 Gmail Cleanup – Company-wise View")
+st.caption("Search → Agent selects → Review → Confirm → Trash")
+
 
 # --------------------------------------------------
-# OpenAI API Key Input
+# Helper: Extract company from sender
+# --------------------------------------------------
+def extract_company(from_field: str) -> str:
+    known_companies = [
+        "Tata",
+        "Amazon",
+        "Google",
+        "Microsoft",
+        "Infosys",
+        "Flipkart",
+        "Wipro",
+        "Accenture"
+    ]
+
+    if not from_field:
+        return "Others"
+
+    from_lower = from_field.lower()
+    for company in known_companies:
+        if company.lower() in from_lower:
+            return company
+
+    return "Others"
+
+
+# --------------------------------------------------
+# Gemini API Key (UI input)
 # --------------------------------------------------
 api_key = st.text_input(
-    "Enter OpenAI API Key",
+    "Enter Gemini API Key",
     type="password",
-    help="Stored only for this session"
+    help="Free key from Google AI Studio. Stored only for this session."
 )
 
 if api_key:
     st.session_state["api_key"] = api_key
 
 if "api_key" not in st.session_state:
-    st.warning("Please enter your OpenAI API key to continue.")
+    st.warning("Please enter your Gemini API key to continue.")
     st.stop()
+
 
 # --------------------------------------------------
 # Gmail OAuth
@@ -40,59 +70,45 @@ try:
     creds = get_credentials()
     service = get_gmail_service(creds)
 except Exception as e:
-    st.error("Failed to authenticate Gmail.")
+    st.error("Gmail authentication failed.")
     st.exception(e)
     st.stop()
 
+
 # --------------------------------------------------
-# Keyword Selection UI
+# Search UI
 # --------------------------------------------------
 st.subheader("Search Emails")
 
-company_keywords = [
-    "Tata",
-    "Infosys",
-    "Amazon",
-    "Google",
-    "Microsoft"
-]
+company_keywords = ["Tata", "Amazon", "Google", "Microsoft", "Infosys"]
 
 selected_company = st.selectbox(
-    "Select a company keyword",
+    "Select a company",
     options=["-- Select --"] + company_keywords
 )
 
-custom_keyword = st.text_input(
-    "Or enter a custom keyword"
-)
-
-# --------------------------------------------------
-# Decide final keyword
-# --------------------------------------------------
-final_keyword = None
+custom_keyword = st.text_input("Or enter a custom keyword")
 
 col1, col2 = st.columns(2)
+final_keyword = None
 
 with col1:
-    search_company_btn = st.button("Search Company Emails")
+    if st.button("Search Company Emails"):
+        if selected_company == "-- Select --":
+            st.warning("Please select a company.")
+            st.stop()
+        final_keyword = selected_company
 
 with col2:
-    search_custom_btn = st.button("Search Custom Keyword")
+    if st.button("Search Custom Keyword"):
+        if not custom_keyword.strip():
+            st.warning("Please enter a keyword.")
+            st.stop()
+        final_keyword = custom_keyword.strip()
 
-if search_company_btn:
-    if selected_company == "-- Select --":
-        st.warning("Please select a company keyword.")
-        st.stop()
-    final_keyword = selected_company
-
-if search_custom_btn:
-    if not custom_keyword.strip():
-        st.warning("Please enter a custom keyword.")
-        st.stop()
-    final_keyword = custom_keyword
 
 # --------------------------------------------------
-# Analyze Inbox (Agent Step)
+# Fetch emails + Agent selection
 # --------------------------------------------------
 if final_keyword:
 
@@ -103,51 +119,86 @@ if final_keyword:
         st.info("No matching emails found.")
         st.stop()
 
+    # Fetch metadata (MESSAGE IDs only)
     emails = [fetch_metadata(service, msg["id"]) for msg in messages]
 
-    with st.spinner("Agent is reviewing emails..."):
-        recommended_ids = agent_decide(
-            api_key=st.session_state["api_key"],
-            keyword=final_keyword,
-            emails=emails
+    # Attach company labels
+    for email in emails:
+        email["company"] = extract_company(email.get("from", ""))
+
+    # Agent selects IDs (may be empty)
+    agent_ids = agent_decide(
+        api_key=st.session_state["api_key"],
+        keyword=final_keyword,
+        emails=emails
+    )
+
+    # -------------------------------
+    # HARD SAFETY: sanitize IDs
+    # -------------------------------
+    valid_message_ids = {
+        e["id"] for e in emails
+        if isinstance(e.get("id"), str) and e["id"].strip()
+    }
+
+    recommended_ids = {
+        i.strip()
+        for i in agent_ids
+        if isinstance(i, str) and i.strip() and i.strip() in valid_message_ids
+    }
+
+    # Fallback if agent returns nothing usable
+    if not recommended_ids:
+        st.warning(
+            "Agent could not confidently select emails. "
+            "Defaulting to ALL displayed emails."
         )
+        recommended_ids = valid_message_ids.copy()
 
     st.session_state["emails"] = emails
     st.session_state["recommended"] = recommended_ids
 
+
 # --------------------------------------------------
-# Display Results
+# Company-wise UI display (NO IDs SHOWN)
 # --------------------------------------------------
 if "emails" in st.session_state:
 
-    st.subheader("Agent-reviewed emails (max 20)")
+    st.subheader("Company-wise Emails")
 
+    company_map = defaultdict(list)
     for email in st.session_state["emails"]:
-        is_selected = email["id"] in st.session_state["recommended"]
-        icon = "✅" if is_selected else "❌"
+        company_map[email["company"]].append(email)
 
-        st.markdown(
-            f"{icon} **{email['subject']}**  \n"
-            f"{email['from']}"
-        )
+    recommended_set = set(st.session_state["recommended"])
+
+    for company, mails in company_map.items():
+
+        st.markdown(f"### 📌 {company}")
+
+        for mail in mails:
+            selected = mail["id"] in recommended_set
+            icon = "✅" if selected else "❌"
+
+            st.markdown(
+                f"{icon} **{mail['subject']}**  \n"
+                f"<small>{mail['from']}</small>",
+                unsafe_allow_html=True
+            )
 
     st.divider()
 
-    st.info(
-        f"Agent recommends moving "
-        f"{len(st.session_state['recommended'])} email(s) to Trash."
-    )
-
     confirm = st.checkbox(
-        "I confirm that ONLY the agent-recommended emails should be moved to Trash"
+        "I confirm that ONLY the selected emails should be moved to Trash"
     )
 
-    if confirm and st.button("Execute Bulk Move to Trash"):
-        with st.spinner("Moving emails to Trash..."):
-            move_to_trash(
-                service,
-                st.session_state["recommended"]
-            )
+    if confirm:
+        if st.button("Execute Bulk Move to Trash"):
+            with st.spinner("Moving emails to Trash..."):
+                move_to_trash(
+                    service,
+                    list(recommended_set)
+                )
 
-        st.success("Selected emails moved to Trash successfully.")
-        st.session_state.clear()
+            st.success("Emails moved to Trash successfully.")
+            st.session_state.clear()
