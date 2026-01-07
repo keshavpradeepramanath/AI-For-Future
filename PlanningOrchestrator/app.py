@@ -13,8 +13,6 @@ else:
     st.sidebar.warning("Please enter your OpenAI API key")
 
 
-
-
 st.title("🤖 Agentic AI with Orchestrator (Streamlit)")
 st.write("A simple example of multi-agent collaboration")
 
@@ -27,11 +25,17 @@ if st.button("Run Agents"):
         with st.spinner("Agents are thinking..."):
             result = orchestrate(query)
 
+            st.write("Research used:", result["used_research"])
+            st.write("Planning used:", result["used_planning"])
+
+            st.success(result["final"])
+
+
         st.subheader("🔍 Research Agent Output")
-        st.write(result["research"])
+        st.write(result["used_research"])
 
         st.subheader("🧠 Planning Agent Output")
-        st.write(result["plan"])
+        st.write(result["used_planning"])
 
         st.subheader("✍️ Final Answer (Writer Agent)")
         st.success(result["final"])
