@@ -1,6 +1,7 @@
 from agents import researcher_agent, planner_agent, writer_agent
 
 def orchestrate(query):
+    MIN_LENGTH =300    
     query_lower = query.lower()
 
     use_research = True
@@ -23,9 +24,17 @@ def orchestrate(query):
 
     final = writer_agent(context)
 
+    retried = False
+    if len(final) < MIN_LENGTH and use_planning:
+        retried = True
+        refined_plan = planner_agent(context + "\nImprove clarity and depth.")
+        final = writer_agent(refined_plan)
+
+
     # ✅ ALWAYS return the same shape
     return {
         "used_research": use_research,
         "used_planning": use_planning,
+        "retried": retried,
         "final": final
     }
