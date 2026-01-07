@@ -1,2 +1,3 @@
 Page config needs to be set before anything else in the app.py, else will lead to failures.
 Setting the openai api is important in agent.py, else the API key is not accesible.
+While changing from OpenAI to Google Gemini, client.chat.completions.create was used instead of client.generate_content
