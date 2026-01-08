@@ -1,6 +1,6 @@
 from agents import researcher_agent, planner_agent, writer_agent
 
-
+"""
 def detect_intent(query: str) -> str:
     q = query.lower()
 
@@ -19,7 +19,7 @@ def detect_intent(query: str) -> str:
     return "CREATION"
 
 
-"""
+
 def orchestrate(query):
     MIN_LENGTH =300    
     query_lower = query.lower()
@@ -58,7 +58,7 @@ def orchestrate(query):
         "retried": retried,
         "final": final
     }
-"""
+
 
 def orchestrate(query):
     intent = detect_intent(query)
@@ -76,6 +76,75 @@ def orchestrate(query):
 
     return {
         "intent": intent,
+        "retried": retried,
+        "final": final
+    }
+"""
+
+
+
+MIN_LENGTH = 150
+
+def detect_intent(query: str) -> str:
+    q = query.lower()
+
+    if any(k in q for k in ["what is", "define", "meaning of"]):
+        return "FACTUAL"
+
+    if any(k in q for k in ["explain", "how does", "why"]):
+        return "EXPLANATION"
+
+    if any(k in q for k in ["compare", "vs", "difference"]):
+        return "COMPARISON"
+
+    if any(k in q for k in ["plan", "itinerary", "roadmap", "strategy"]):
+        return "PLANNING"
+
+    return "CREATION"
+
+
+def orchestrate(query):
+    intent = detect_intent(query)
+    trace = []
+    retried = False
+
+    # ⚡ FAST PATH (new)
+    if intent == "FACTUAL":
+        trace.append("writer")
+        final = writer_agent(query)
+        return {
+            "intent": intent,
+            "trace": trace,
+            "retried": False,
+            "final": final
+        }
+
+    context = query
+
+    # 🔍 Research
+    trace.append("researcher")
+    context = researcher_agent(context)
+
+    # 🧠 Planning (only when useful)
+    if intent in ["COMPARISON", "PLANNING", "CREATION"]:
+        trace.append("planner")
+        context = planner_agent(context)
+
+    # ✍️ Writing
+    trace.append("writer")
+    final = writer_agent(context)
+
+    # 🔁 Controlled retry
+    if intent in ["PLANNING", "COMPARISON"] and len(final) < MIN_LENGTH:
+        retried = True
+        trace.append("retry_planner")
+        refined = planner_agent(context + "\nImprove clarity and depth.")
+        trace.append("retry_writer")
+        final = writer_agent(refined)
+
+    return {
+        "intent": intent,
+        "trace": trace,
         "retried": retried,
         "final": final
     }
