@@ -1,4 +1,5 @@
 from agents import researcher_agent, planner_agent, writer_agent
+import time
 
 """
 def detect_intent(query: str) -> str:
@@ -85,6 +86,7 @@ def orchestrate(query):
 
 MIN_LENGTH = 150
 
+
 def detect_intent(query: str) -> str:
     q = query.lower()
 
@@ -102,7 +104,7 @@ def detect_intent(query: str) -> str:
 
     return "CREATION"
 
-
+"""
 def orchestrate(query):
     intent = detect_intent(query)
     trace = []
@@ -146,5 +148,67 @@ def orchestrate(query):
         "intent": intent,
         "trace": trace,
         "retried": retried,
+        "final": final
+    }
+
+"""
+
+
+
+def timed(agent_name, fn, arg, trace):
+    start = time.time()
+    result = fn(arg)
+    duration = int((time.time() - start) * 1000)
+    trace.append({"agent": agent_name, "ms": duration})
+    return result
+
+
+def calculate_confidence(final_text, trace):
+    score = 0.5
+
+    if len(final_text) > 300:
+        score += 0.2
+    if final_text.count("\n") > 5:
+        score += 0.1
+    if len(trace) <= 2:
+        score += 0.1
+
+    return min(round(score, 2), 0.95)
+
+
+
+def orchestrate(query):
+    intent = detect_intent(query)
+    trace = []
+    retried = False
+
+    # ⚡ FAST PATH
+    if intent == "FACTUAL":
+        final = timed("writer", writer_agent, query, trace)
+        confidence = calculate_confidence(final, trace)
+        return {
+            "intent": intent,
+            "trace": trace,
+            "retried": False,
+            "confidence": confidence,
+            "final": final
+        }
+
+    context = query
+
+    context = timed("researcher", researcher_agent, context, trace)
+
+    if intent in ["COMPARISON", "PLANNING", "CREATION"]:
+        context = timed("planner", planner_agent, context, trace)
+
+    final = timed("writer", writer_agent, context, trace)
+
+    confidence = calculate_confidence(final, trace)
+
+    return {
+        "intent": intent,
+        "trace": trace,
+        "retried": retried,
+        "confidence": confidence,
         "final": final
     }
