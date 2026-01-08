@@ -4,13 +4,13 @@ from orchestrator import orchestrate
 
 st.set_page_config(page_title="Agentic AI Demo", layout="wide")
 
-st.sidebar.subheader("🔑 OpenAI API Key")
-api_key = st.sidebar.text_input("Enter OpenAI API Key", type="password")
+st.sidebar.subheader("🔑 gemini API Key")
+api_key = st.sidebar.text_input("Enter Gemini API Key", type="password")
 
 if api_key:
-    os.environ["OPENAI_API_KEY"] = api_key
+    os.environ["GOOGLE_API_KEY"] = api_key
 else:
-    st.sidebar.warning("Please enter your OpenAI API key")
+    st.sidebar.warning("Please enter your Gemini API key")
 
 
 st.title("🤖 Agentic AI with Orchestrator (Streamlit)")
@@ -25,17 +25,27 @@ if st.button("Run Agents"):
         with st.spinner("Agents are thinking..."):
             result = orchestrate(query)
 
-            st.write("Research used:", result["used_research"])
-            st.write("Planning used:", result["used_planning"])
+            st.write("🔁 Retried for quality:", result["retried"])
+
+            st.write("Research used:", result["trace"])
+            st.write("Planning used:", result["trace"])
+
+            st.caption(f"🧠 Intent: {result['intent']}")
+            st.caption(f"📊 Confidence: {result['confidence']}")
+            st.caption(
+                "🧩 Trace: " +
+                " → ".join(f"{t['agent']} ({t['ms']}ms)" for t in result["trace"])
+            )
+
 
             st.success(result["final"])
 
 
         st.subheader("🔍 Research Agent Output")
-        st.write(result["used_research"])
+        st.write(result["trace"])
 
         st.subheader("🧠 Planning Agent Output")
-        st.write(result["used_planning"])
+        st.write(result["trace"])
 
         st.subheader("✍️ Final Answer (Writer Agent)")
         st.success(result["final"])
