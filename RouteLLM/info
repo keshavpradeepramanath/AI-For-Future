@@ -1,1 +1,22 @@
 Route LLM
+
+llm_router_app/
+│
+├── app.py                       # Streamlit UI (CALLS orchestrator)
+│
+├── agent/
+│   ├── __init__.py
+│   └── orchestrator.py          # ✅ Agent Orchestrator (ONE entry point)
+│
+├── router/
+│   ├── __init__.py
+│   ├── intent_classifier.py     # Intent detection
+│   └── model_router.py          # Intent → model mapping
+│
+├── llms/
+│   ├── __init__.py
+│   └── mock_llm.py              # Mock LLM calls
+│
+└── utils/
+    └── constants.py             # (optional)
+
