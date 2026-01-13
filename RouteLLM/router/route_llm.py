@@ -1,17 +1,25 @@
-def route_query(query: str):
+def route_query(query: str) -> str:
     q = query.lower().strip()
 
-    # HARD STOP — SIMPLE QUESTIONS
+    # Simple definitions → WEAK
     if q.startswith(("what is", "define", "explain", "meaning of")):
-        return "weak", 0.0, {"reason": "hardcoded_simple"}
+        return "weak"
 
-    # STRONG MUST BE EXPLICIT
-    strong_triggers = [
-        "design", "architecture", "compare", "optimize",
-        "scalable", "strategy", "tradeoff"
+    # Design / architecture / comparison → STRONG
+    STRONG_TERMS = [
+        "design",
+        "architecture",
+        "compare",
+        "optimization",
+        "optimize",
+        "strategy",
+        "routing",
+        "system"
     ]
 
-    if not any(t in q for t in strong_triggers):
-        return "weak", 0.2, {"reason": "no_strong_trigger"}
+    for term in STRONG_TERMS:
+        if term in q:
+            return "strong"
 
-    return "strong", 0.9, {"reason": "explicit_design_intent"}
+    # Default → WEAK
+    return "weak"
