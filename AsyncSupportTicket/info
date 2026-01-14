@@ -1,1 +1,15 @@
+Ticket Text
+   ↓
+Orchestrator (async)
+   ↓
+Planner → intent + urgency
+   ↓
+Router → Billing / Tech / General agent
+   ↓
+Async Executors (parallel)
+   ├── Draft response
+   ├── Priority tagging
+   └── Team assignment
+   ↓
+Streamlit UI
 
