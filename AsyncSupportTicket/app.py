@@ -1,25 +1,48 @@
 import streamlit as st
 import asyncio
 from orchestrator import run_support_agent
+from executors import execute_final_action
 
-st.set_page_config(page_title="Support Ticket Agent", layout="centered")
+st.set_page_config(page_title="HITL Support Agent", layout="centered")
 
-st.title("🎧 Agentic Customer Support App")
+st.title("🧑‍⚖️ Human-in-the-Loop Support Agent")
 
-ticket = st.text_area("Enter customer support ticket:")
+ticket = st.text_area("Customer Ticket")
 
-if st.button("Process Ticket"):
-    if ticket:
-        with st.spinner("Agent processing ticket..."):
-            output = asyncio.run(run_support_agent(ticket))
+if "agent_state" not in st.session_state:
+    st.session_state.agent_state = None
 
-        st.subheader("🧠 Ticket Understanding")
-        st.json(output["plan"])
+if st.button("Run Agent"):
+    with st.spinner("Agent drafting response..."):
+        st.session_state.agent_state = asyncio.run(
+            run_support_agent(ticket)
+        )
 
-        st.subheader("🤖 Routed Agent")
-        st.write(output["agent_type"])
+state = st.session_state.agent_state
 
-        st.subheader("⚙️ Agent Actions (Async)")
-        st.json(output["results"])
+if state:
+    st.subheader("🧠 Agent Understanding")
+    st.json(state["plan"])
+
+    st.subheader("✍️ Draft Response")
+    st.write(state["draft"]["draft_response"])
+    st.write("Priority:", state["draft"]["priority"])
+
+    if state["approval_required"]:
+        st.warning("⚠️ Human approval required")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            if st.button("✅ Approve"):
+                result = asyncio.run(
+                    execute_final_action(state["draft"])
+                )
+                st.success(result)
+
+        with col2:
+            if st.button("❌ Reject"):
+                st.error("Draft rejected. Manual handling required.")
     else:
-        st.warning("Please enter a ticket.")
+        result = asyncio.run(execute_final_action(state["draft"]))
+        st.success(result)
