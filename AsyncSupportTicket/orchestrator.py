@@ -1,14 +1,19 @@
 from planner import plan_ticket
 from router import route_agent
-from executors import run_parallel_tasks
+from executors import draft_only
+from approval import requires_approval
 
 async def run_support_agent(ticket: str) -> dict:
     plan = plan_ticket(ticket)
-    agent_type = route_agent(plan)
-    results = await run_parallel_tasks(plan)
+    agent = route_agent(plan)
+    draft = await draft_only(plan)
+
+    approval_needed = requires_approval(plan)
 
     return {
         "plan": plan,
-        "agent_type": agent_type,
-        "results": results
+        "agent": agent,
+        "draft": draft,
+        "approval_required": approval_needed,
+        "approved": False
     }
