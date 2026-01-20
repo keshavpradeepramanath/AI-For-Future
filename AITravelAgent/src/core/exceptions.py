@@ -1,0 +1,2 @@
+class TravelPlannerException(Exception):
+    pass
