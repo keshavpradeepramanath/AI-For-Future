@@ -1,0 +1,9 @@
+streamlit
+pyyaml
+langchain
+langchain-groq
+langchain-openai
+tavily-python
+langchain-google-genai
+google-generativeai
+
