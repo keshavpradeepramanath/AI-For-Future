@@ -1,0 +1,10 @@
+llm:
+  provider: groq
+  model: llama3-70b-8192
+
+search:
+  provider: tavily
+  max_results: 5
+
+app:
+  title: AI-Powered Travel Itinerary Planner
