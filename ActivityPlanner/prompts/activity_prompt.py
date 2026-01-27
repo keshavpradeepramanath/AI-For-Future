@@ -7,6 +7,7 @@ def get_activity_generation_prompt(preferences: dict) -> str:
     """
     Creates a structured prompt for generating a realistic, pace-aware
     travel activity plan.
+    Put atleast 1 activity for morning, afternoon and night
     """
 
     destination = preferences["destination"]
