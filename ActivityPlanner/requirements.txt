@@ -1,0 +1,10 @@
+streamlit>=1.31.0
+
+# Optional: LLM providers
+openai>=1.6.0
+
+# Optional: for future async / agent orchestration
+asyncio
+
+# Optional: JSON schema validation (recommended for agent outputs)
+jsonschema>=4.21.0
