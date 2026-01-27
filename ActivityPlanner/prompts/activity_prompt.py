@@ -10,7 +10,7 @@ def get_activity_generation_prompt(preferences: dict) -> str:
     Put atleast 1 activity for morning, afternoon and night
     """
 
-    destination = preferences["destination"]
+    destinations = preferences["destinations"]
     days = preferences["days"]
     pace = preferences["pace"]
     kids = preferences["kids"]
@@ -27,7 +27,7 @@ day-by-day activity plan.
 =====================
 TRAVEL CONTEXT
 =====================
-Destination: {destination}
+Destination: {destinations}
 Trip Duration: {days} days
 Travel Pace: {pace}
 Traveling With: {kids}
