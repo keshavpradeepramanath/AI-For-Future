@@ -6,29 +6,29 @@ from agents.evaluator_agent import evaluate_plan
 from agents.refinement_agent import refine_plan
 from agents.day_regeneration_agent import regenerate_day
 from agents.sustainability_agent import score_day_sustainability
+from agents.transport_agent import recommend_transport
 
 # -------------------------------------------------
 # Page Config
 # -------------------------------------------------
 st.set_page_config(
-    page_title="Agentic Activity Planner",
+    page_title="Agentic Sustainable Travel Planner",
     layout="wide"
 )
 
-st.title("🧭 Agentic Travel Activity Planner")
-st.caption("Stateful, controllable, day-by-day intelligent planning")
+st.title("🧭 Agentic Sustainable Travel Planner")
+st.caption(
+    "Stateful planning • Day-level regeneration • Sustainability-aware transport"
+)
 
 # -------------------------------------------------
-# Session State
+# Session State Initialization
 # -------------------------------------------------
 if "final_plan" not in st.session_state:
     st.session_state.final_plan = None
 
 if "preferences" not in st.session_state:
     st.session_state.preferences = None
-
-if "llm_provider" not in st.session_state:
-    st.session_state.llm_provider = "Mock"
 
 if "api_key" not in st.session_state:
     st.session_state.api_key = ""
@@ -38,20 +38,12 @@ if "api_key" not in st.session_state:
 # -------------------------------------------------
 st.sidebar.header("🤖 Model Configuration")
 
-provider = st.sidebar.selectbox(
-    "LLM Provider",
-    ["Mock", "OpenAI"]
+api_key = st.sidebar.text_input(
+    "OpenAI API Key",
+    type="password",
+    help="Stored only for this session"
 )
 
-api_key = ""
-if provider != "Mock":
-    api_key = st.sidebar.text_input(
-        "API Key",
-        type="password",
-        help="Stored only for this session"
-    )
-
-st.session_state.llm_provider = provider
 st.session_state.api_key = api_key
 
 st.sidebar.divider()
@@ -64,7 +56,7 @@ st.sidebar.header("✈️ Travel Preferences")
 destinations_input = st.sidebar.text_area(
     "Destinations (one per line)",
     value="Split\nDubrovnik",
-    help="Enter one city/place per line"
+    help="Enter one city or place per line"
 )
 
 destinations = [
@@ -97,60 +89,87 @@ budget = st.sidebar.selectbox(
 # Generate Full Plan
 # -------------------------------------------------
 if st.button("✨ Generate Travel Plan"):
-    if provider != "Mock" and not api_key:
-        st.warning("Please provide an API key or switch to Mock mode.")
+    if not api_key:
+        st.warning("Please provide your OpenAI API key.")
     elif not destinations:
         st.warning("Please enter at least one destination.")
     else:
         with st.spinner("Agents are planning your trip..."):
             preferences = interpret_preferences(
-                destinations,
-                days,
-                travel_pace,
-                kids,
-                food_interest,
-                budget
+                destinations=destinations,
+                days=days,
+                pace=travel_pace,
+                kids=kids,
+                food=food_interest,
+                budget=budget
             )
 
             draft_plan = generate_activities(
-                preferences,
-                llm_provider=provider,
+                preferences=preferences,
                 api_key=api_key
             )
 
             evaluation = evaluate_plan(draft_plan, preferences)
             final_plan = refine_plan(draft_plan, evaluation)
 
-            st.session_state.final_plan = final_plan
-            st.session_state.preferences = preferences
-
-        st.success("Your personalized itinerary is ready!")
+            if isinstance(final_plan, dict) and final_plan:
+                st.session_state.final_plan = final_plan
+                st.session_state.preferences = preferences
+                st.success("Your personalized itinerary is ready!")
+            else:
+                st.session_state.final_plan = None
+                st.error("Failed to generate a valid plan. Please try again.")
 
 # -------------------------------------------------
-# Display Plan
+# Display Itinerary
 # -------------------------------------------------
 if isinstance(st.session_state.final_plan, dict) and st.session_state.final_plan:
-    for day, activities in st.session_state.final_plan.items():
-        with st.container():
-            st.subheader(day)
+    st.header("📅 Your Itinerary")
 
-            for act in activities:
-                st.write(f"• {act}")
+    destinations = st.session_state.preferences["destinations"]
+    day_keys = list(st.session_state.final_plan.keys())
 
-            sustainability = score_day_sustainability(
-                day_name=day,
-                activities=activities,
-                destination=st.session_state.preferences["destinations"][0],
-                llm_provider=st.session_state.llm_provider,
+    for i, day in enumerate(day_keys):
+        activities = st.session_state.final_plan[day]
+
+        st.subheader(day)
+
+        for act in activities:
+            st.write(f"• {act}")
+
+        # 🌱 Sustainability (PER DAY)
+        sustainability = score_day_sustainability(
+            day_name=day,
+            activities=activities,
+            destination=destinations[min(i, len(destinations) - 1)],
+            api_key=st.session_state.api_key
+        )
+
+        st.markdown(
+            f"🌱 **Sustainability Score:** `{sustainability['score']} / 5`"
+        )
+        st.caption(sustainability["summary"])
+
+        # 🚆 Transport between destinations
+        if i < len(destinations) - 1:
+            origin = destinations[i]
+            next_city = destinations[i + 1]
+
+            transport = recommend_transport(
+                origin=origin,
+                destination=next_city,
+                preferences=st.session_state.preferences,
                 api_key=st.session_state.api_key
             )
 
-            st.markdown(
-                f"🌱 **Sustainability Score:** `{sustainability['score']} / 5`"
+            st.markdown("🚦 **Travel to Next Destination**")
+            st.write(
+                f"**Recommended Mode:** {transport['mode']}  \n"
+                f"🌱 Sustainability: {transport['sustainability_score']} / 5  \n"
+                f"{transport['summary']}"
             )
-            st.caption(sustainability["summary"])
 
-            st.divider()
+        st.divider()
 
     # -------------------------------------------------
     # Day-Level Regeneration
@@ -159,23 +178,21 @@ if isinstance(st.session_state.final_plan, dict) and st.session_state.final_plan
 
     day_to_regenerate = st.sidebar.selectbox(
         "Select Day",
-        list(st.session_state.final_plan.keys())
+        day_keys
     )
 
     if st.sidebar.button("Regenerate Selected Day"):
-        if provider == "Mock":
-            st.info("Day regeneration requires an LLM provider.")
+        if not api_key:
+            st.warning("Please provide your OpenAI API key.")
         else:
             with st.spinner(f"Regenerating {day_to_regenerate}..."):
                 updated_activities = regenerate_day(
                     day_key=day_to_regenerate,
                     full_plan=st.session_state.final_plan,
                     preferences=st.session_state.preferences,
-                    llm_provider=provider,
                     api_key=api_key
                 )
 
                 st.session_state.final_plan[day_to_regenerate] = updated_activities
 
             st.success(f"{day_to_regenerate} updated successfully!")
-
