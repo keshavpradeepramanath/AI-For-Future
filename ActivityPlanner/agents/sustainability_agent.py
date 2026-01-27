@@ -4,7 +4,6 @@ def score_day_sustainability(
     day_name: str,
     activities: list[str],
     destination: str,
-    llm_provider: str,
     api_key: str
 ):
     """
@@ -15,11 +14,8 @@ def score_day_sustainability(
     }
     """
 
-    if llm_provider != "OpenAI":
-        return {
-            "score": 3,
-            "summary": "Moderate impact day with a mix of walking and tourist activities."
-        }
+    if not api_key:
+        raise ValueError("OpenAI API key is required")
 
     client = OpenAI(api_key=api_key)
 
@@ -43,7 +39,7 @@ Consider:
 Return ONLY:
 
 Score: <0-5>
-Summary: <one or two sentences explaining the score>
+Summary: <one or two sentences>
 """
 
     response = client.chat.completions.create(
@@ -68,6 +64,9 @@ def _parse_day_score(text: str):
             score = int(line.replace("Score:", "").strip())
         elif line.startswith("Summary:"):
             summary = line.replace("Summary:", "").strip()
+
+    if not summary:
+        summary = "Moderate sustainability impact for the day."
 
     return {
         "score": score,
