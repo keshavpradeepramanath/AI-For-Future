@@ -37,13 +37,13 @@ Budget Comfort: {budget}
 PLANNING RULES
 =====================
 1. Do NOT exceed {daily_limit} main activities per day.
-2. Always assume travel fatigue.
-3. Activities should be geographically close where possible.
-4. Avoid early mornings on consecutive days.
-5. Include at least one flexible or rest activity per day if:
-   - Pace is Slow
-   - Traveling with infants or toddlers
-6. Activities must be realistic for normal tourists (no rushing).
+2. Activities MUST be specific, real-world places, landmarks, or experiences.
+3. NEVER use generic phrases like:
+   - "city walk"
+   - "local food experience"
+   - "explore the city"
+4. Every activity must clearly belong to the destination.
+5. Assume the traveler wants memorable, concrete experiences.
 
 =====================
 FOOD RULES
