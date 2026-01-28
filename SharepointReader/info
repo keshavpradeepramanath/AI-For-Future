@@ -18,3 +18,22 @@ Re-Ranking (Small model)
 │
 ▼
 Grounded Answer LLM
+
+
+
+Streamlit (UI)
+│
+API Layer (FastAPI)
+│
+├── Query Service
+├── Retrieval Service
+├── Re-ranking Service
+│
+Vector DB (ANN)
+│
+Metadata DB (Postgres)
+│
+Background Workers
+│
+└── SharePoint Sync + Transcription
+
