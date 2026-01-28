@@ -37,7 +37,7 @@ Budget Comfort: {budget}
 =====================
 PLANNING RULES
 =====================
-1. Do NOT exceed {daily_limit} main activities per day.
+1. Provide atleast 3 activities per day.
 2. Activities MUST be specific, real-world places, landmarks, or experiences.
 3. NEVER use generic phrases like:
    - "city walk"
@@ -45,6 +45,7 @@ PLANNING RULES
    - "explore the city"
 4. Every activity must clearly belong to the destination.
 5. Assume the traveler wants memorable, concrete experiences.
+6. Give a 1-2 line details about each activity.
 
 =====================
 FOOD RULES
@@ -68,17 +69,23 @@ KIDS & INFANTS RULES
 =====================
 OUTPUT FORMAT (STRICT)
 =====================
+=====================
+OUTPUT FORMAT (STRICT)
+=====================
 Return the plan in the following format ONLY:
 
 Day 1:
-- Activity 1
-- Activity 2
-- Activity 3
+- Activity: <short, concrete activity name>
+  Why: <1–2 sentence explanation>
 
 Day 2:
-- Activity 1
-- Activity 2
+- Activity: <activity name>
+  Why: <explanation>
 
-Do NOT include explanations, emojis, or extra text.
-Focus on clarity, pacing, and comfort.
+Rules:
+- Explanations must be practical and human
+- Mention crowds, timing, local value, or comfort where relevant
+- Do NOT use generic phrases
+- Do NOT add emojis or extra text
+
 """
