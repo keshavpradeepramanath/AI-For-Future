@@ -47,6 +47,7 @@ Rules:
 
 def _parse_single_day(text: str):
     activities = []
+    current = None
 
     for line in text.splitlines():
         line = line.strip()
@@ -54,22 +55,18 @@ def _parse_single_day(text: str):
         if not line:
             continue
 
-        # Skip day headers
-        if line.lower().startswith("day"):
+        if line.startswith("- Activity:"):
+            current = {
+                "title": line.replace("- Activity:", "").strip(),
+                "why": ""
+            }
+            activities.append(current)
             continue
 
-        # Handle bullets: -, •, *, numbers
-        if (
-            line.startswith("-")
-            or line.startswith("•")
-            or line[0].isdigit()
-        ):
-            cleaned = line.lstrip("-•0123456789. ").strip()
-            if cleaned:
-                activities.append(cleaned)
+        if line.startswith("Why:") and current:
+            current["why"] = line.replace("Why:", "").strip()
 
-    # 🔒 Safety fallback
     if not activities:
-        activities.append("Leisurely exploration at your own pace")
+        raise ValueError("Regeneration returned no activities")
 
     return activities
