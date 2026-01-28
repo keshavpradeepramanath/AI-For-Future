@@ -1,53 +1,58 @@
 from openai import OpenAI
 from prompts.activity_prompt import get_activity_generation_prompt
 
-def generate_activities(
-    preferences: dict,
-    llm_provider: str = "Mock",
-    api_key: str | None = None
-):
-    # ---------------------------
-    # MOCK MODE (only for demos)
-    # ---------------------------
-    if llm_provider == "Mock":
-        return _mock_plan(preferences)
+def generate_activities(preferences: dict, api_key: str):
+    """
+    Generates a full multi-day itinerary using OpenAI
+    """
 
-    # ---------------------------
-    # OPENAI MODE (REAL CONTENT)
-    # ---------------------------
-    if llm_provider == "OpenAI":
-        if not api_key:
-            raise ValueError("OpenAI API key is required")
+    if not api_key:
+        raise ValueError("OpenAI API key is required")
 
-        client = OpenAI(api_key=api_key)
-        prompt = get_activity_generation_prompt(preferences)
+    client = OpenAI(api_key=api_key)
+    prompt = get_activity_generation_prompt(preferences)
 
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You are an expert travel planner."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.6
-        )
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "You are an expert travel planner."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.6
+    )
 
-        raw_text = response.choices[0].message.content
-        return _parse_llm_output(raw_text)
-
-    raise ValueError(f"Unsupported LLM provider: {llm_provider}")
+    raw_text = response.choices[0].message.content
+    return _parse_llm_output(raw_text)
 
 
 def _parse_llm_output(text: str) -> dict:
     plan = {}
     current_day = None
+    current_activity = None
 
     for line in text.splitlines():
         line = line.strip()
 
-        if line.startswith("Day"):
+        if not line:
+            continue
+
+        if line.lower().startswith("day"):
             current_day = line.replace(":", "")
             plan[current_day] = []
-        elif line.startswith("-") and current_day:
-            plan[current_day].append(line.replace("-", "").strip())
+            continue
+
+        if line.startswith("- Activity:") and current_day:
+            current_activity = {
+                "title": line.replace("- Activity:", "").strip(),
+                "why": ""
+            }
+            plan[current_day].append(current_activity)
+            continue
+
+        if line.startswith("Why:") and current_activity:
+            current_activity["why"] = line.replace("Why:", "").strip()
+
+    if not plan:
+        raise ValueError("LLM returned empty itinerary")
 
     return plan
