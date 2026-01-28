@@ -135,7 +135,8 @@ if isinstance(st.session_state.final_plan, dict) and st.session_state.final_plan
         st.subheader(day)
 
         for act in activities:
-            st.write(f"• {act}")
+            st.markdown(f"**• {act['title']}**")
+            st.caption(act["why"])
 
         # 🌱 Sustainability (PER DAY)
         sustainability = score_day_sustainability(
