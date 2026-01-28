@@ -1,0 +1,20 @@
+SharePoint
+│
+├── Async Ingestion Workers
+│   ├── PDFs / PPTs
+│   └── Videos → Transcript Cache
+│
+▼
+Document Registry (Metadata DB)
+│
+▼
+Multi-Stage Retrieval
+│
+├── Stage 1: Metadata Filter (FAST)
+│ └── Stage 2: ANN Vector Search
+│
+▼
+Re-Ranking (Small model)
+│
+▼
+Grounded Answer LLM
