@@ -1,1 +1,95 @@
 
+enterprise_rag_assistant/
+│
+├── app.py
+│   └── Streamlit entry point
+│       - Wires dependencies
+│       - Declares SharePoint location (via config)
+│       - No business logic
+│
+├── config/
+│   ├── __init__.py
+│   ├── settings.py
+│   │   ├── AppSettings
+│   │   ├── SharePointConfig
+│   │   └── Feature flags, thresholds
+│   │
+│   └── secrets.py
+│       └── Secure access to API keys (env / vault)
+│
+├── core/
+│   ├── __init__.py
+│   ├── interfaces.py
+│   │   ├── LLM (abstract)
+│   │   └── Retriever (abstract)
+│   │
+│   ├── llm_factory.py
+│   │   ├── OpenAILLM
+│   │   ├── ClaudeLLM
+│   │   ├── GeminiLLM
+│   │   └── LLMFactory
+│   │
+│   ├── prompts.py
+│   │   └── System + safety prompts
+│   │
+│   └── rag_engine.py
+│       └── Grounded RAG logic (no UI, no SDK coupling)
+│
+├── ingestion/
+│   ├── __init__.py
+│   ├── sharepoint_loader.py
+│   │   ├── SharePoint connection abstraction
+│   │   ├── Graph API / OAuth boundary
+│   │   └── Metadata + content retrieval
+│   │
+│   ├── ingestion_service.py
+│   │   └── Orchestrates ingestion into vector store
+│   │
+│   ├── ppt_parser.py
+│   │   └── Slide + notes extraction
+│   │
+│   └── video_transcriber.py
+│       └── Teams video → transcript + timestamps
+│
+├── retrieval/
+│   ├── __init__.py
+│   ├── vector_store.py
+│   │   ├── InMemory (dev)
+│   │   └── Interface for FAISS / Pinecone / Weaviate
+│   │
+│   └── retriever.py
+│       └── Hybrid retrieval (vector + keyword + filters)
+│
+├── voice/
+│   ├── __init__.py
+│   ├── speech_to_text.py
+│   │   └── STT abstraction (Whisper / Azure / Google)
+│   │
+│   └── text_to_speech.py
+│       └── TTS abstraction
+│
+├── ui/
+│   ├── __init__.py
+│   ├── chat_ui.py
+│   │   └── Chat rendering (Streamlit)
+│   │
+│   └── voice_ui.py
+│       └── Voice controls (push-to-talk, playback)
+│
+├── utils/
+│   ├── __init__.py
+│   ├── logging.py
+│   │   └── Structured logging
+│   │
+│   └── metrics.py
+│       └── Latency, retrieval quality, refusals
+│
+├── tests/
+│   ├── test_rag_engine.py
+│   ├── test_retriever.py
+│   └── test_llm_factory.py
+│
+├── requirements.txt
+│
+└── README.md
+    └── Architecture, setup, security notes
