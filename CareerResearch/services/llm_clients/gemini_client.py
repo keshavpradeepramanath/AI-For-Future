@@ -1,4 +1,6 @@
 import requests
+import asyncio
+from functools import partial
 from config.settings import GEMINI_API_KEY
 
 GEMINI_ENDPOINT = (
@@ -6,44 +8,25 @@ GEMINI_ENDPOINT = (
     "models/gemini-pro:generateContent"
 )
 
-def call_gemini(prompt: str) -> str:
-    try:
-        response = requests.post(
-            f"{GEMINI_ENDPOINT}?key={GEMINI_API_KEY}",
-            json={
-                "contents": [
-                    {
-                        "role": "user",
-                        "parts": [{"text": prompt}]
-                    }
-                ]
-            },
-            timeout=30
-        )
+def _call_gemini_sync(prompt: str) -> str:
+    response = requests.post(
+        f"{GEMINI_ENDPOINT}?key={GEMINI_API_KEY}",
+        json={
+            "contents": [
+                {"role": "user", "parts": [{"text": prompt}]}
+            ]
+        },
+        timeout=30
+    )
+    data = response.json()
 
-        data = response.json()
+    if "candidates" not in data:
+        return "[Gemini unavailable]"
 
-        # --- HARD FAILURES ---
-        if "error" in data:
-            return f"[Gemini unavailable] {data['error'].get('message', 'Unknown error')}"
+    return data["candidates"][0]["content"]["parts"][0]["text"]
 
-        if "promptFeedback" in data:
-            return "[Gemini blocked] Safety filters prevented a response."
-
-        # --- EXPECTED PATH ---
-        candidates = data.get("candidates")
-        if not candidates:
-            return "[Gemini unavailable] No candidates returned."
-
-        content = candidates[0].get("content")
-        if not content:
-            return "[Gemini unavailable] Missing content."
-
-        parts = content.get("parts")
-        if not parts:
-            return "[Gemini unavailable] Missing content parts."
-
-        return parts[0].get("text", "[Gemini unavailable] Empty response.")
-
-    except Exception as e:
-        return f"[Gemini exception] {str(e)}"
+async def call_gemini_async(prompt: str) -> str:
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(
+        None, partial(_call_gemini_sync, prompt)
+    )
