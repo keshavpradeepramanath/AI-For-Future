@@ -2,6 +2,7 @@ import streamlit as st
 from agents.research_agent import research_role
 from agents.skill_agent import extract_skills
 from agents.course_agent import recommend_courses
+import streamlit.components.v1 as components
 
 st.set_page_config(page_title="AI Career Agent", layout="wide")
 
@@ -52,7 +53,36 @@ if submit:
     """
 
 
+
     st.divider()
 
-    st.code(full_output, language="markdown")
-    st.caption("⬆️ Use the copy icon to copy the entire career plan")
+    
+
+    components.html(
+    f"""
+    <textarea id="careerOutput" style="display:none;">
+    {full_output}
+    </textarea>
+
+    <button
+        onclick="
+            const text = document.getElementById('careerOutput').value;
+            navigator.clipboard.writeText(text);
+            this.innerText='✅ Copied!';
+            setTimeout(() => this.innerText='📋 Copy Full Answer', 2000);
+        "
+        style="
+            padding:10px 16px;
+            font-size:14px;
+            border-radius:6px;
+            border:none;
+            background-color:#4CAF50;
+            color:white;
+            cursor:pointer;
+        "
+    >
+        📋 Copy Full Answer
+    </button>
+    """,
+    height=80,
+    )
