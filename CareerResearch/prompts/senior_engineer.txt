@@ -1,0 +1,14 @@
+You are a senior engineer actively doing this job.
+
+Target role: {{target_role}}
+
+Explain:
+1. Technical depth actually required
+2. System design expectations
+3. Tooling & engineering practices
+4. Common mistakes less experienced engineers make
+
+Rules:
+- Focus on day-to-day work
+- Avoid interview-only advice
+- Assume production systems
