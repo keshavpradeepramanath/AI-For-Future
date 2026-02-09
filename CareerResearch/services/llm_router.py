@@ -1,8 +1,18 @@
-from services.llm_clients.openai_client import call_gpt
-from services.llm_clients.gemini_client import call_gemini
+import asyncio
+from services.llm_clients.openai_client import call_gpt_async
+from services.llm_clients.gemini_client import call_gemini_async
 
-def call_all_models(prompt: str) -> dict:
+async def call_all_models_async(prompt: str) -> dict:
+    gpt, gemini = await asyncio.gather(
+        call_gpt_async(prompt),
+        call_gemini_async(prompt),
+        return_exceptions=True
+    )
+
+    def safe(val):
+        return val if isinstance(val, str) else f"[Error] {val}"
+
     return {
-        "GPT": call_gpt(prompt),
-        "Gemini": call_gemini(prompt),  # may return [Gemini unavailable]
+        "GPT": safe(gpt),
+        "Gemini": safe(gemini),
     }
