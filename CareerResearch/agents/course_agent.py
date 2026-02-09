@@ -1,3 +1,5 @@
+##Tells which course to prepare
+
 from services.llm_service import call_llm
 from prompts.course_prompt import COURSE_PROMPT
 
