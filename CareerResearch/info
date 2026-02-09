@@ -1,18 +1,60 @@
-career_agent/
+career-llm-council/
 │
 ├── app.py
-├── config/
-│   └── settings.py
-├── services/
-│   └── llm_service.py
-├── agents/
-│   ├── research_agent.py
-│   ├── skill_agent.py
-│   └── course_agent.py
-├── prompts/
-│   ├── research_prompt.py
-│   ├── skill_prompt.py
-│   └── course_prompt.py
 ├── requirements.txt
-└── README.md
-
+├── README.md
+│
+├── config/
+│   ├── __init__.py
+│   └── settings.py
+│
+├── services/
+│   ├── __init__.py
+│   ├── llm_clients/
+│   │   ├── __init__.py
+│   │   ├── openai_client.py
+│   │   ├── claude_client.py
+│   │   └── gemini_client.py
+│   │
+│   └── llm_router.py
+│
+├── agents/
+│   ├── __init__.py
+│   │
+│   ├── council/
+│   │   ├── __init__.py
+│   │   │
+│   │   ├── personas/
+│   │   │   ├── __init__.py
+│   │   │   ├── hiring_manager.py
+│   │   │   ├── senior_engineer.py
+│   │   │   ├── career_coach.py
+│   │   │   └── learning_architect.py
+│   │   │
+│   │   ├── council_chair.py
+│   │   └── orchestrator.py
+│   │
+│   └── validators/
+│       ├── __init__.py
+│       └── consensus_checker.py
+│
+├── prompts/
+│   ├── __init__.py
+│   │
+│   ├── personas/
+│   │   ├── hiring_manager.txt
+│   │   ├── senior_engineer.txt
+│   │   ├── career_coach.txt
+│   │   └── learning_architect.txt
+│   │
+│   └── council_chair.txt
+│
+├── utils/
+│   ├── __init__.py
+│   ├── clipboard.py
+│   └── formatting.py
+│
+├── .env.example
+├── .gitignore
+└── .streamlit/
+    └── secrets.toml
