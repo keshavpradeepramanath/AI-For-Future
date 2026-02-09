@@ -33,3 +33,26 @@ if submit:
 
     st.subheader("🎓 Recommended Courses")
     st.write(courses)
+
+    full_output = f"""
+    AI CAREER PREPARATION PLAN
+    =========================
+
+    ROLE EXPECTATIONS
+    -----------------
+    {research}
+
+    REQUIRED SKILLSETS
+    ------------------
+    {skills}
+
+    RECOMMENDED COURSES
+    -------------------
+    {courses}
+    """
+
+
+    st.divider()
+
+    st.code(full_output, language="markdown")
+    st.caption("⬆️ Use the copy icon to copy the entire career plan")
