@@ -1,0 +1,11 @@
+IMPORTANT:
+You MUST use EXACT section headings below.
+Do NOT rename them.
+Do NOT add extra sections.
+
+Use EXACTLY these headings:
+
+## Role Expectations
+## Required Skillsets
+## Learning Roadmap
+## Career Risks & Practical Advice
