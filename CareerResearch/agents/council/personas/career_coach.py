@@ -1,6 +1,6 @@
-from services.llm_router import call_all_models
+from services.llm_router import call_all_models_async
 
-def career_coach_views(current_role, target_role, years_exp):
+def career_coach_views_async(current_role, target_role, years_exp):
     prompt = f"""
 You are a pragmatic career coach.
 
@@ -14,4 +14,4 @@ Advise on:
 - Transition risks
 - What to prioritize
 """
-    return call_all_models(prompt)
+    return call_all_models_async(prompt)

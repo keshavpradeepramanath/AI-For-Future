@@ -1,13 +1,15 @@
-from services.llm_router import call_all_models
+from services.llm_router import call_all_models_async
 
-def senior_engineer_views(target_role):
+async def senior_engineer_views_async(target_role):
     prompt = f"""
-You are a senior engineer in the role: {target_role}
+You are a senior engineer actively working in the role: {target_role}.
 
 Explain:
 - Core technical depth required
 - System design expectations
-- Daily responsibilities
-- Common mistakes
+- Tooling and engineering practices
+- Common mistakes less experienced engineers make
+
+Focus on real, day-to-day work — not interview theory.
 """
-    return call_all_models(prompt)
+    return await call_all_models_async(prompt)

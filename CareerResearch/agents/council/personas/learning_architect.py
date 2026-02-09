@@ -1,6 +1,6 @@
-from services.llm_router import call_all_models
+from services.llm_router import call_all_models_async
 
-def learning_architect_views(target_role):
+async def learning_architect_views_async(target_role):
     prompt = f"""
 You design learning paths.
 
@@ -11,4 +11,4 @@ Provide:
 - Best resource types
 - Common learning mistakes
 """
-    return call_all_models(prompt)
+    return await call_all_models_async(prompt)
