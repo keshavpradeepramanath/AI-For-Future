@@ -1,1 +1,18 @@
+career_agent/
+│
+├── app.py
+├── config/
+│   └── settings.py
+├── services/
+│   └── llm_service.py
+├── agents/
+│   ├── research_agent.py
+│   ├── skill_agent.py
+│   └── course_agent.py
+├── prompts/
+│   ├── research_prompt.py
+│   ├── skill_prompt.py
+│   └── course_prompt.py
+├── requirements.txt
+└── README.md
 
