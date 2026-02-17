@@ -1,1 +1,23 @@
-
+[
+    {
+      "name": "AI Leader",
+      "text": "8 years experience in machine learning, deep learning, NLP, PyTorch, GenAI, innovation awards, 2 patents."
+    },
+    {
+      "name": "ML Engineer",
+      "text": "5 years experience in machine learning, TensorFlow, AWS deployment."
+    },
+    {
+      "name": "Research Scientist",
+      "text": "10 years research, published papers, NLP, computer vision."
+    },
+    {
+      "name": "Software Engineer",
+      "text": "3 years backend python development."
+    },
+    {
+      "name": "AI Product Innovator",
+      "text": "7 years AI, LLM deployment, MLops, innovation lab leadership."
+    }
+  ]
+  
