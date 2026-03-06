@@ -5,3 +5,29 @@ App does the following:
 3)Screen profiles
 4)Display result of candidates
 5)Risk profile for selection is also mentioned
+
+
+                   +---------------------+
+Upload JD + Resumes
+                   |
+                   v
+          Resume Parser Service
+                   |
+                   v
+         Vector Embedding Service
+          (OpenAI / BGE / Instructor)
+                   |
+                   v
+        Vector Database (FAISS/Pinecone)
+                   |
+                   v
+       Similarity Search (Top K resumes)
+                   |
+                   v
+           LLM Screening Agents
+                   |
+                   v
+        Ranking + Risk + Interview Insights
+                   |
+                   v
+              React UI
