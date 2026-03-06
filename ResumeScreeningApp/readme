@@ -31,3 +31,21 @@ Upload JD + Resumes
                    |
                    v
               React UI
+
+
+
+Upload 1000 resumes
+        ↓
+Parser service extracts text
+        ↓
+Embedding generation
+        ↓
+Vector similarity search
+        ↓
+Top 50 resumes
+        ↓
+Async LLM screening
+        ↓
+Ranking
+        ↓
+Results streamed to UI
