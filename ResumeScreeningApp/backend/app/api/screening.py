@@ -1,11 +1,9 @@
 from fastapi import APIRouter, UploadFile, File
-from app.services.candidate_store import store_candidates
-import asyncio
 import numpy as np
 
 from app.core.parser import extract_text
 from app.services.embedding_service import generate_embedding
-from app.vector_store.faiss_store import ResumeVectorStore
+from app.services.candidate_store import store_candidates
 
 from app.agents.llm_screening_agent import screen_resume
 from app.agents.risk_analysis_agent import analyze_risk
@@ -28,10 +26,8 @@ async def screen_candidates(
 
     jd_text = await extract_text(jd_file)
 
-    # Generate JD embedding
     jd_embedding = await generate_embedding(jd_text)
 
-    # Initialize results list
     results = []
 
     for resume in resumes:
@@ -50,7 +46,7 @@ async def screen_candidates(
 
         insights = await generate_interview_insights(jd_text, resume_text)
 
-        results.append({
+        candidate = {
             "candidate_name": screening["candidate_name"],
             "score": score,
             "decision": screening["decision"],
@@ -58,28 +54,17 @@ async def screen_candidates(
             "risk_level": risk["risk_level"],
             "strength": insights["strength"],
             "skill_gap": insights["skill_gap"],
-            "interview_question": insights["interview_question"]
-        })
+            "interview_question": insights["interview_question"],
+            "embedding": resume_embedding
+        }
 
-    # Rank candidates
+        results.append(candidate)
+
     results = sorted(results, key=lambda x: x["score"], reverse=True)
 
     for idx, r in enumerate(results):
         r["rank"] = idx + 1
 
-    return {"results": results}    # Async parallel evaluation
-    tasks = [evaluate_candidate(c) for c in top_candidates]
-
-    results = await asyncio.gather(*tasks)
-
-    # Ranking
-    results = sorted(results, key=lambda x: x["score"], reverse=True)
-
-    for idx, r in enumerate(results):
-        r["rank"] = idx + 1
     store_candidates(results)
-
-    for idx, r in enumerate(results):
-        r["rank"] = idx + 1
 
     return {"results": results}
