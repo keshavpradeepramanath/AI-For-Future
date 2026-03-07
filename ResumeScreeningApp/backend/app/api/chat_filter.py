@@ -12,7 +12,7 @@ class Query(BaseModel):
     query: str
 
 
-SIMILARITY_THRESHOLD = 0.65
+SIMILARITY_THRESHOLD = 0.72
 
 
 def cosine_similarity(a, b):
