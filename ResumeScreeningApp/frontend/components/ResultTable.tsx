@@ -1,159 +1,153 @@
-export default function ResultTable({ results }) {
+import React from "react"
 
-    if (!results || results.length === 0) return null
-  
-    return (
-  
-      <div style={{marginTop:40}}>
-  
-        <h2 style={{marginBottom:20}}>Candidate Screening Results</h2>
-  
-        <table style={{
-          width:"100%",
-          borderCollapse:"collapse",
-          fontFamily:"Arial"
-        }}>
-  
-          <thead style={{background:"#f4f6f8"}}>
-            <tr>
-            <th style={th}>Rank</th>
-            <th style={th}>Candidate</th>
-            <th style={th}>Match Score</th>
-            <th style={th}>Status</th>
-            <th style={th}>Risk</th>
-            <th style={th}>Reason</th>
-            </tr>
-          </thead>
-  
-          <tbody>
-  
-          {results.map((r,index)=>{
-  
-            const statusColor =
-              r.decision === "Selected" ? "#16a34a" : "#dc2626"
-  
-            const riskColor =
-              r.risk_level === "Low Risk"
-                ? "#16a34a"
-                : r.risk_level === "Medium Risk"
-                ? "#f59e0b"
-                : "#dc2626"
-  
-            return(
-  
-                <tr key={index} style={{borderBottom:"1px solid #eee"}}>
+type Candidate = {
+  rank: number
+  candidate_name: string
+  score: number
+  decision: string
+  reason: string
+  strength: string
+  skill_gap: string
+}
 
-                <td style={td}>{r.rank}</td>
-                
-                <td style={td}>{r.candidate_name}</td>
-                
-                <td style={td}>
-                  <div style={{
-                    background:"#e5e7eb",
-                    width:"140px",
-                    height:"10px",
-                    borderRadius:"6px"
-                  }}>
-                    <div style={{
-                      width:`${r.score}%`,
-                      background:"#2563eb",
-                      height:"10px",
-                      borderRadius:"6px"
-                    }}/>
-                  </div>
-                
-                  <div style={{fontSize:"12px"}}>{r.score}/100</div>
-                </td>
-                
-                <td style={td}>{r.decision}</td>
-                
-                <td style={td}>{r.risk_level}</td>
-                
-                <td style={td}>{r.strength}</td>
-                
-                <td style={td}>{r.skill_gap}</td>
-                
-                <td style={td}>
-                  <details>
-                    <summary>View Question</summary>
-                    {r.interview_question}
-                  </details>
-                </td>
-                
-                </tr>
-  
-            )
-          })}
-  
-          </tbody>
-  
-        </table>
-  
-      </div>
-    )
+type Props = {
+  results: Candidate[]
+}
+
+export default function ResultTable({ results }: Props) {
+
+  if (!results || results.length === 0) {
+    return null
   }
-  
+
+  const tableStyle = {
+    width: "100%",
+    borderCollapse: "collapse" as const,
+    marginTop: "30px"
+  }
+
   const th = {
-    padding:"12px",
-    textAlign:"left",
-    fontWeight:"600"
+    textAlign: "left" as const,
+    padding: "10px",
+    background: "#f3f4f6",
+    borderBottom: "1px solid #ddd",
+    fontSize: "14px"
   }
-  
+
   const td = {
-    padding:"12px",
-    verticalAlign:"top"
+    padding: "10px",
+    borderBottom: "1px solid #eee",
+    fontSize: "14px"
   }
-  
 
-  function getScoreColor(score:number){
+  const scoreBarContainer = {
+    width: "120px",
+    height: "8px",
+    background: "#e5e7eb",
+    borderRadius: "5px"
+  }
 
-    if(score >= 80) return "#16a34a"  // green
-    if(score >= 60) return "#2563eb"  // blue
-    if(score >= 40) return "#f59e0b"  // yellow
-    return "#dc2626"                  // red
-  }
- 
-  
-  function getStatusStyle(status:string){
+  return (
 
-    if(status === "Selected"){
-      return {
-        background:"#ecfdf5",
-        color:"#065f46",
-        border:"1px solid #a7f3d0"
-      }
-    }
-  
-    return {
-      background:"#f3f4f6",
-      color:"#374151",
-      border:"1px solid #d1d5db"
-    }
-  }
-  
-  
-  function getRiskStyle(risk:string){
-  
-    if(risk === "Low Risk"){
-      return {
-        background:"#ecfdf5",
-        color:"#065f46",
-        border:"1px solid #a7f3d0"
-      }
-    }
-  
-    if(risk === "Medium Risk"){
-      return {
-        background:"#fffbeb",
-        color:"#92400e",
-        border:"1px solid #fde68a"
-      }
-    }
-  
-    return {
-      background:"#fef2f2",
-      color:"#991b1b",
-      border:"1px solid #fecaca"
-    }
-  }
-  
+    <div>
+
+      <h3 style={{marginTop:"40px"}}>Candidate Ranking</h3>
+
+      <table style={tableStyle}>
+
+        <thead>
+
+          <tr>
+
+            <th style={th}>Rank</th>
+
+            <th style={th}>Candidate</th>
+
+            <th style={th}>Score</th>
+
+            <th style={th}>Decision</th>
+
+            <th style={th}>Reason</th>
+
+            <th style={th}>Strength</th>
+
+            <th style={th}>Skill Gap</th>
+
+          </tr>
+
+        </thead>
+
+        <tbody>
+
+          {results.map((r, index) => (
+
+            <tr key={index}>
+
+              <td style={td}>{r.rank}</td>
+
+              <td style={td}>{r.candidate_name}</td>
+
+              <td style={td}>
+
+                <div style={scoreBarContainer}>
+
+                  <div
+                    style={{
+                      width: `${r.score}%`,
+                      height: "8px",
+                      background: "#2563eb",
+                      borderRadius: "5px"
+                    }}
+                  />
+
+                </div>
+
+                <div style={{fontSize:"12px",marginTop:"4px"}}>
+
+                  {r.score}%
+
+                </div>
+
+              </td>
+
+              <td style={td}>
+
+                <span
+                  style={{
+                    padding: "4px 8px",
+                    borderRadius: "6px",
+                    background:
+                      r.decision === "Selected"
+                        ? "#dcfce7"
+                        : "#fee2e2",
+                    color:
+                      r.decision === "Selected"
+                        ? "#166534"
+                        : "#991b1b"
+                  }}
+                >
+
+                  {r.decision}
+
+                </span>
+
+              </td>
+
+              <td style={td}>{r.reason}</td>
+
+              <td style={td}>{r.strength}</td>
+
+              <td style={td}>{r.skill_gap}</td>
+
+            </tr>
+
+          ))}
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  )
+}
