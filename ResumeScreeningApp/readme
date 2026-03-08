@@ -6,6 +6,7 @@ App does the following:
 4)Display result of candidates
 5)Compares profiles based on skillsets
 6)Filters profiles based on skillset
+7)Used Redis via brew for better caching
 
 
                    +---------------------+
