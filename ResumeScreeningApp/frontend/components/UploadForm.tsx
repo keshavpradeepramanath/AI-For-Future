@@ -1,42 +1,87 @@
 import { useState } from "react"
-import { screenCandidates } from "../services/api"
 
-export default function UploadForm({ onResult }) {
+export default function UploadForm({ setResults }) {
 
-  const [jdFile,setJdFile] = useState<File|null>(null)
-  const [resumes,setResumes] = useState<FileList|null>(null)
+  const [jd,setJd] = useState<File | null>(null)
+  const [resumes,setResumes] = useState<FileList | null>(null)
+  const [status,setStatus] = useState("")
+  const [loading,setLoading] = useState(false)
 
-  async function handleSubmit(e:React.FormEvent){
+  async function startScreening(){
 
-    e.preventDefault()
-
-    if(!jdFile || !resumes) return
+    if(!jd || !resumes){
+      alert("Please upload JD and resumes")
+      return
+    }
 
     const formData = new FormData()
 
-    formData.append("jd_file",jdFile)
+    formData.append("jd_file",jd)
 
     for(let i=0;i<resumes.length;i++){
       formData.append("resumes",resumes[i])
     }
 
-    const data = await screenCandidates(formData)
+    setLoading(true)
 
-    onResult(data.results)
+    const response = await fetch(
+      "http://localhost:8000/api/screen-stream",
+      {
+        method:"POST",
+        body:formData
+      }
+    )
+
+    const reader = response.body?.getReader()
+
+    const decoder = new TextDecoder()
+
+    if(!reader) return
+
+    while(true){
+
+      const {done,value} = await reader.read()
+
+      if(done) break
+
+      const chunk = decoder.decode(value)
+
+      const lines = chunk.split("\n")
+
+      for(const line of lines){
+
+        if(line.startsWith("data:")){
+
+          const data = JSON.parse(line.replace("data:",""))
+
+          setStatus(data.status)
+
+          if(data.results){
+            setResults(data.results)
+            setLoading(false)
+          }
+
+        }
+
+      }
+
+    }
+
   }
+
 
   return(
 
-    <form onSubmit={handleSubmit}>
+    <div style={{marginTop:"20px"}}>
 
-      <h3>Upload JD</h3>
+      <h3>Upload Job Description</h3>
 
       <input
         type="file"
-        onChange={(e)=>setJdFile(e.target.files?.[0] || null)}
+        onChange={(e)=>setJd(e.target.files?.[0] || null)}
       />
 
-      <h3>Upload Resumes</h3>
+      <h3 style={{marginTop:"20px"}}>Upload Candidate Resumes</h3>
 
       <input
         type="file"
@@ -44,10 +89,39 @@ export default function UploadForm({ onResult }) {
         onChange={(e)=>setResumes(e.target.files)}
       />
 
-      <button type="submit">
-        Screen Candidates
+      <br/>
+
+      <button
+        onClick={startScreening}
+        disabled={loading}
+        style={{
+          marginTop:"20px",
+          padding:"8px 16px",
+          background: loading ? "#aaa" : "#2563eb",
+          color:"white",
+          border:"none",
+          borderRadius:"6px",
+          cursor: loading ? "not-allowed" : "pointer"
+        }}
+      >
+
+        {loading ? "Screening..." : "Screen Candidates"}
+
       </button>
 
-    </form>
+
+      {status && (
+
+        <div style={{marginTop:"20px"}}>
+
+          <p>{status}</p>
+
+        </div>
+
+      )}
+
+    </div>
+
   )
+
 }
