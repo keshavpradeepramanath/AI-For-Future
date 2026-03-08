@@ -5,6 +5,8 @@ from app.api.screening import router as screening_router
 from app.api.chat_filter import router as chat_router
 from app.api.compare import router as compare_router
 
+from app.api.screen_stream import router as stream_router
+
 
 
 app = FastAPI()
@@ -20,6 +22,7 @@ app.add_middleware(
 app.include_router(screening_router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
 app.include_router(compare_router, prefix="/api")
+app.include_router(stream_router, prefix="/api")
 
 @app.get("/")
 def root():
