@@ -26,10 +26,8 @@ async def screen_candidates(
             evaluate_candidate(jd_text, resume_text)
         )
 
-    # Run all evaluations in parallel
     results = await asyncio.gather(*tasks)
 
-    # Rank candidates
     results = sorted(results, key=lambda x: x["score"], reverse=True)
 
     for i, r in enumerate(results):
