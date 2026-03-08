@@ -50,3 +50,26 @@ Async LLM screening
 Ranking
         ↓
 Results streamed to UI
+
+
+
+
+Upload JD + Resumes
+        │
+        ▼
+Resume Parser
+        │
+        ▼
+Redis Cache Check
+        │
+ ┌──────┴──────┐
+ │             │
+Cache Hit   Cache Miss
+ │             │
+Return      LLM Evaluation
+ │             │
+ └──────┬──────┘
+        ▼
+Results Stored in Redis
+        ▼
+Ranking
