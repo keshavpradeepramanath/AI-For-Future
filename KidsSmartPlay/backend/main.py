@@ -1,8 +1,8 @@
 # backend/main.py
 
 from fastapi import FastAPI
-from workflows.game_workflow import workflow
 from fastapi.middleware.cors import CORSMiddleware
+from services.exercise_store import load_exercises
 
 app = FastAPI(
     title="SmartPlay AI",
@@ -18,18 +18,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/")
-def home():
 
-    return {
-        "message": "SmartPlay AI running",
-        "endpoint": "/game/{day}"
-    }
+@app.get("/game/{num}")
+def get_game(num: int):
+    exercises = load_exercises()
+    if num < 1:
+        num = 1
 
-
-@app.get("/game/{day}")
-def generate_game(day: int):
-
-    result = workflow.invoke({"day": day})
-
-    return result
+    if num > len(exercises):
+        return {
+            "message": "All exercises completed"
+        }
+    return exercises[num-1]
