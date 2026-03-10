@@ -2,37 +2,40 @@ import React, { useState, useEffect } from "react";
 
 function App() {
 
-const [game, setGame] = useState(null);
-const [day, setDay] = useState(1);
-const [result, setResult] = useState("");
+const [exercise, setExercise] = useState(null);
+const [exerciseNumber, setExerciseNumber] = useState(1);
+const [feedback, setFeedback] = useState("");
 const [showNext, setShowNext] = useState(false);
-const [loading, setLoading] = useState(true);
+const [completed, setCompleted] = useState(false);
 
 useEffect(() => {
-fetchGame();
-}, [day]);
+loadExercise(exerciseNumber);
+}, [exerciseNumber]);
 
-async function fetchGame() {
+async function loadExercise(num) {
 
 
-setLoading(true);
-setResult("");
+setFeedback("");
 setShowNext(false);
 
 try {
 
-  const response = await fetch(`http://127.0.0.1:8000/game/${day}`);
+  const response = await fetch(`http://127.0.0.1:8000/game/${num}`);
+
   const data = await response.json();
 
-  setGame(data);
+  if (data.message === "All exercises completed") {
+    setCompleted(true);
+    return;
+  }
+
+  setExercise(data);
 
 } catch (error) {
 
-  console.error("Error loading game:", error);
+  console.error("Failed to load exercise", error);
 
 }
-
-setLoading(false);
 
 
 }
@@ -40,15 +43,15 @@ setLoading(false);
 function checkAnswer(option) {
 
 
-if (!game) return;
+if (!exercise) return;
 
-if (String(option) === String(game.answer)) {
+if (String(option) === String(exercise.answer)) {
 
-  setResult("🎉 Correct!");
+  setFeedback("🎉 Correct!");
 
 } else {
 
-  setResult(`❌ Wrong! Correct answer is ${game.answer}`);
+  setFeedback(`❌ Wrong! Correct answer: ${exercise.answer}`);
 
 }
 
@@ -60,18 +63,40 @@ setShowNext(true);
 function nextExercise() {
 
 
-setDay(prev => prev + 1);
+setExerciseNumber(prev => prev + 1);
 
 
 }
 
-if (loading || !game) {
+if (completed) {
 
 
 return (
-  <div style={{ padding: 40 }}>
-    <h2>Loading exercise...</h2>
+
+  <div style={{textAlign:"center",padding:40}}>
+
+    <h1>🎉 All 100 Exercises Completed!</h1>
+
+    <p>Great job! Come back tomorrow for more learning.</p>
+
   </div>
+
+);
+
+
+}
+
+if (!exercise) {
+
+
+return (
+
+  <div style={{padding:40}}>
+
+    <h2>Loading exercise...</h2>
+
+  </div>
+
 );
 
 
@@ -80,42 +105,42 @@ return (
 return (
 
 
-<div style={{ padding: 40, textAlign: "center" }}>
+<div style={{padding:40,textAlign:"center"}}>
 
   <h1>SmartPlay Kids 🎮</h1>
 
-  <h2>Exercise {day} / 100</h2>
+  <h2>Exercise {exerciseNumber} / 100</h2>
 
-  <h3>{game.game_name}</h3>
+  <h3>{exercise.game_name}</h3>
 
-  <p>{game.instruction}</p>
+  <p>{exercise.instruction}</p>
 
-  <h3>{game.question}</h3>
+  <h3>{exercise.question}</h3>
 
-  <div style={{ fontSize: "60px", margin: "20px 0" }}>
+  <div style={{fontSize:"60px",margin:"20px 0"}}>
 
-    {game.objects && game.objects.map((obj, i) => (
-      <span key={i} style={{ margin: "10px" }}>
+    {exercise.objects && exercise.objects.map((obj,i)=>(
+      <span key={i} style={{margin:"10px"}}>
         {obj}
       </span>
     ))}
 
   </div>
 
-  {!showNext && game.options && (
+  {!showNext && (
 
     <div>
 
-      {game.options.map((opt, i) => (
+      {exercise.options && exercise.options.map((opt,i)=>(
 
         <button
           key={i}
-          onClick={() => checkAnswer(opt)}
+          onClick={()=>checkAnswer(opt)}
           style={{
-            margin: "10px",
-            padding: "10px 20px",
-            fontSize: "18px",
-            cursor: "pointer"
+            margin:"10px",
+            padding:"10px 20px",
+            fontSize:"18px",
+            cursor:"pointer"
           }}
         >
           {opt}
@@ -127,20 +152,20 @@ return (
 
   )}
 
-  <h2 style={{ marginTop: 20 }}>{result}</h2>
+  <h2 style={{marginTop:20}}>{feedback}</h2>
 
   {showNext && (
 
     <button
       onClick={nextExercise}
       style={{
-        marginTop: 20,
-        padding: "12px 25px",
-        fontSize: "18px",
-        background: "#4CAF50",
-        color: "white",
-        border: "none",
-        cursor: "pointer"
+        marginTop:20,
+        padding:"12px 25px",
+        fontSize:"18px",
+        background:"#4CAF50",
+        color:"white",
+        border:"none",
+        cursor:"pointer"
       }}
     >
       Next Exercise →
