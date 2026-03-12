@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import DragDropGame from "./DragDropGame";
 
 function App() {
 
@@ -10,6 +11,8 @@ const [completed, setCompleted] = useState(false);
 
 function speak(text) {
 
+
+if (!text) return;
 
 const speech = new SpeechSynthesisUtterance(text);
 
@@ -39,6 +42,7 @@ setShowNext(false);
 try {
 
   const response = await fetch(`http://127.0.0.1:8000/game/${num}`);
+
   const data = await response.json();
 
   if (data.message === "All exercises completed") {
@@ -141,21 +145,45 @@ return (
     🔊
   </button>
 
-  <div style={{ fontSize:"80px", margin:"30px 0" }}>
+  {/* Drag-drop exercise */}
 
-    {exercise.objects && exercise.objects.map((obj,i)=>(
-      <span key={i} style={{ margin:"15px" }}>
-        {obj}
-      </span>
-    ))}
+  {exercise.game_name && exercise.game_name.includes("Arrange") ? (
 
-  </div>
+    <DragDropGame
+      objects={exercise.objects}
+      answer={exercise.answer}
+      onCorrect={() => {
 
-  {!showNext && (
+        setFeedback("🎉 Correct!");
+
+        speak("Great job!");
+
+        setShowNext(true);
+
+      }}
+    />
+
+  ) : (
+
+    <div style={{ fontSize:"80px", margin:"30px 0" }}>
+
+      {exercise.objects && exercise.objects.map((obj,i)=>(
+        <span key={i} style={{ margin:"15px" }}>
+          {obj}
+        </span>
+      ))}
+
+    </div>
+
+  )}
+
+  {/* Tap answer exercises */}
+
+  {!showNext && exercise.options && exercise.options.length > 0 && (
 
     <div>
 
-      {exercise.options && exercise.options.map((opt,i)=>(
+      {exercise.options.map((opt,i)=>(
 
         <button
           key={i}
