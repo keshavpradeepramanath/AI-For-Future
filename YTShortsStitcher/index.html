@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Smart Shorts</title>
+</head>
+
+<body style="text-align:center; background:black; color:white;">
+
+  <h2>Smart Shorts 🎬</h2>
+
+  <select id="category" onchange="resetFeed()">
+    <option value="funny">Funny</option>
+    <option value="fitness">Fitness</option>
+    <option value="education">Education</option>
+  </select>
+
+  <label>
+    <input type="checkbox" id="kids" onchange="resetFeed()"> Kid Safe
+  </label>
+
+  <br><br>
+
+  <div id="player"></div>
+
+  <script src="https://www.youtube.com/iframe_api"></script>
+
+  <script>
+    let player;
+    let videos = [];
+    let currentIndex = 0;
+    let loading = false;
+
+    async function fetchVideos() {
+      if (loading) return;
+      loading = true;
+
+      const category = document.getElementById("category").value;
+      const kids = document.getElementById("kids").checked;
+
+      const res = await fetch(`http://localhost:8000/playlist?category=${category}&kids_safe=${kids}`);
+      const data = await res.json();
+
+      videos = videos.concat(data.videos);
+      loading = false;
+    }
+
+    function playNext() {
+      if (videos.length === 0) return;
+
+      // 🔥 infinite feed
+      if (currentIndex >= videos.length - 3) {
+        fetchVideos();
+      }
+
+      if (currentIndex >= videos.length) {
+        currentIndex = 0;
+      }
+
+      player.loadVideoById(videos[currentIndex]);
+      currentIndex++;
+    }
+
+    function resetFeed() {
+      videos = [];
+      currentIndex = 0;
+      fetchVideos().then(() => playNext());
+    }
+
+    function onYouTubeIframeAPIReady() {
+      player = new YT.Player('player', {
+        height: window.innerHeight * 0.8,
+        width: window.innerWidth * 0.4,
+        playerVars: {
+          autoplay: 1,
+          mute: 1,
+          controls: 0,
+          rel: 0,
+          modestbranding: 1
+        },
+        events: {
+          'onReady': async () => {
+            await fetchVideos();
+            playNext();
+          },
+          'onStateChange': (event) => {
+            if (event.data === YT.PlayerState.ENDED) {
+              playNext();
+            }
+          },
+          'onError': () => {
+            playNext(); // 🔥 skip broken videos
+          }
+        }
+      });
+    }
+  </script>
+
+</body>
+</html>
